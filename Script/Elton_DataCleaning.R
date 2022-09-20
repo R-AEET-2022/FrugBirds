@@ -31,3 +31,14 @@ length(Elton_pred$Species)
 Elton_pred <- Elton_pred[1:2060,]
 
 rm(Elton_raw) #Clean environment
+
+
+#Check differences in scientific names between datasets
+length(setdiff(Elton$Species, AVONET$BirdLife_Species))
+length(setdiff(Elton$Species, AVONET$BirdTree_Species))
+
+setdiff(Elton$Species, AVONET$BirdTree_Species) %in% AVONET$BirdLife_Species
+
+
+
+
