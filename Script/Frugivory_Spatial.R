@@ -6,10 +6,10 @@
 library(sp)
 library(mapview)
 
-#This script aims at plotting the centroids of distribution rage for each
+# This script aims at plotting the centroids of distribution rage for each
 # species worldwide. Size of each coordinate will depict the importance
 # of fruits in bird's diet in order to test if there is an latitudinal
-# pattern in the compsumption of fruits by birds
+# pattern in the consumption of fruits by birds
 
 #Check NA's within data and remove it from data (just for plotting)
 which(is.na(Frug_db$Centre_Lat))
@@ -27,5 +27,8 @@ Frug_Spatial <- SpatialPointsDataFrame(coords=coords, data = Frug_Spatial,
 
 
 # Create interactive map
-?mapview
-mapview(Frug_Spatial,cex="Frugivory")
+map<-mapview(Frug_Spatial,cex="Frugivory", zcol="Family", legend=FALSE, alpha=2)
+
+#Save map as interactive html
+mapshot(map, url="Figures/Frugivory_Map.html")
+rm(list=c("coords", "Frug_Spatial", "map"))#clean environment
