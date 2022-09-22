@@ -15,15 +15,15 @@ table(Elton_raw$Diet.Certainty) #Only Category A is valid for our purposes
 
 # Create 2 subsets:
 
-Elton <- Elton_raw %>% filter(Diet.Certainty=="A") %>% 
-                       select(Scientific, Diet.Fruit) %>%
-                       rename(Species = Scientific,
+Elton <- Elton_raw %>% dplyr::filter(Diet.Certainty=="A") %>% 
+                       dplyr::select(Scientific, Diet.Fruit) %>%
+                       dplyr::rename(Species = Scientific,
                               Frugivory = Diet.Fruit)
 
 
-Elton_pred <- Elton_raw %>% filter(Diet.Certainty!="A") %>% 
-                         select(Scientific, Diet.Fruit) %>%
-                       rename(Species = Scientific,
+Elton_pred <- Elton_raw %>% dplyr::filter(Diet.Certainty!="A") %>% 
+                         dplyr::select(Scientific, Diet.Fruit) %>%
+                       dplyr::rename(Species = Scientific,
                        Frugivory_Interpolated = Diet.Fruit) 
 
 # two last rows from Elton_pred datasets are empty rows
@@ -45,11 +45,11 @@ Elton[which(Elton$Species=="Campylopterus curvipennis"), "Species"]<-"Pampa curv
 Elton[which(Elton$Species=="Campylopterus excellens"), "Species"]<-"Pampa excellens"
 
 #The other 2 sps are extinct so we delete them in Elton database
-Elton<- Elton %>% filter(Species!= "Philydor novaesi") %>% filter(Species!="Melamprosops phaeosoma")
+Elton<- Elton %>% dplyr::filter(Species!= "Philydor novaesi") %>% filter(Species!="Melamprosops phaeosoma")
 
 #Check again the differences
 setdiff(Elton$Species, AVONET$BirdTree_Species) #no difference
-Elton<-Elton %>% rename(BirdTree_Species=Species)
+Elton<-Elton %>% dplyr::rename(BirdTree_Species=Species)
 
 #Merge both datasets
 Frug_db <- left_join(Elton, AVONET, by="BirdTree_Species")
@@ -82,7 +82,7 @@ Elton_pred[which(Elton_pred$Species=="Lophura hatinhensis"), "Species"]<-"Lophur
 
 #Hypositta perdita = invalid taxon
 
-Elton_pred<- Elton_pred %>% filter(Species!= "Hypositta perdita") 
+Elton_pred<- Elton_pred %>% dplyr::filter(Species!= "Hypositta perdita") 
 
 #Check sps names again
 
@@ -90,7 +90,7 @@ setdiff(Elton_pred$Species, AVONET$BirdTree_Species)
 
 #Prediction database with traits
 
-Elton_pred<-Elton_pred %>% rename(BirdTree_Species=Species)
+Elton_pred<-Elton_pred %>% dplyr::rename(BirdTree_Species=Species)
 
 Elton_pred<- left_join(Elton_pred, AVONET, by="BirdTree_Species")
 
