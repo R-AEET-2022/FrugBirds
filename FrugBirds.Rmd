@@ -285,6 +285,14 @@ rm(list=c("coords", "Frug_Spatial", "map"))#clean environment
 ```
 
 # Construct a model with poisson distribution and check it
+
+We use Kipps Distance as a proxy fo the Lifestyle 
+```{r}
+library(ggplot2)
+ggplot(Frug_db, aes(x=Lifestyle, y=log(KippsD), fill=Lifestyle)) + geom_boxplot() + geom_jitter(alpha=0.1)
+
+```
+
 ```{r}
 library(lme4)
 m5<- glmer(Frugivory~scale(Beak_Width, center = T) + scale(KippsD, center=T) + scale(Centre_Lat,center=T) + (1|Genus), data=Frug_db, family="poisson")
