@@ -1,0 +1,284 @@
+---
+title: "FrugBirds"
+author: "Iago Ferreiro & Iciar Jiménez"
+date: "2022-09-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data cleaning AVONET database
+
+
+```{r load libraries}
+library(dplyr)
+library(ggplot2)
+library(stringr)
+```
+
+
+
+Import AVONET  BirdLife data 
+```{r}
+AVONET <- read.csv("Data/Traits/AVONET/AVONET_BirdLife_Data.csv", sep=";")
+
+```
+
+
+Import crosswalk between BirdLife dataset and BirdTree (Jetz phylo)
+```{r}
+crosswalk <- read.csv("Data/Traits/AVONET/BirdLife_BirdTree_crosswalk.csv", sep=";")
+crosswalk <- crosswalk %>% dplyr::select(BirdLife_Species, BirdTree_Species)
+
+```
+
+
+Merge with AVONET dataset
+```{r}
+AVONET <- AVONET %>% dplyr::rename(BirdLife_Species=Species1) 
+AVONET <- left_join(AVONET, crosswalk, by="BirdLife_Species")
+rm(crosswalk) #clean environment
+```
+
+Select only traits of interest
+```{r}
+AVONET <- AVONET %>% dplyr::select(Avibase.ID1, Family1, Order1, BirdLife_Species,
+                            BirdTree_Species, Beak.Length_Culmen,
+                            Beak.Length_Nares, Beak.Width, Beak.Depth,
+                            Kipps.Distance, Primary.Lifestyle, Centroid.Latitude,
+                            Centroid.Longitude, Range.Size) %>%
+                   dplyr::rename(ID_Avibase = Avibase.ID1, Family=Family1, Order= Order1,
+                           Beak_CulmenLength = Beak.Length_Culmen,
+                           Beak_NaresLength = Beak.Length_Nares,
+                           Beak_Width = Beak.Width, Beak_Depth= Beak.Depth,
+                           KippsD = Kipps.Distance, Lifestyle = Primary.Lifestyle,
+                           Centre_Lat = Centroid.Latitude, Centre_Long=Centroid.Longitude,
+                           Range_Size = Range.Size)
+```
+
+Create genus column
+
+```{r}
+AVONET$Genus <- word(AVONET$BirdTree_Species, 1)
+```
+
+# Data cleaning EltonTraits database
+
+Load specific libraries
+```{r}
+library(dplyr)
+
+```
+
+
+Import Elton Traits database
+```{r}
+Elton_raw <- read.delim("Data/Traits/ELTON/Elton_BirdFuncDat.txt")
+
+```
+
+
+Our main aim is to predict those values related to the percentage of fruits
+within species-specific diet that were previously interpolated by EltonTraits
+owners and curators.
+```{r}
+table(Elton_raw$Diet.Certainty) 
+```
+Only Category A is valid for our purposes
+
+
+Create 2 subsets:
+```{r}
+Elton <- Elton_raw %>% dplyr::filter(Diet.Certainty=="A") %>% 
+                       dplyr::select(Scientific, Diet.Fruit) %>%
+                       dplyr::rename(Species = Scientific,
+                              Frugivory = Diet.Fruit)
+
+
+Elton_pred <- Elton_raw %>% dplyr::filter(Diet.Certainty!="A") %>% 
+                         dplyr::select(Scientific, Diet.Fruit) %>%
+                       dplyr::rename(Species = Scientific,
+                       Frugivory_Interpolated = Diet.Fruit) 
+
+```
+
+
+two last rows from Elton_pred datasets are empty rows
+```{r}
+length(Elton_pred$Species)
+Elton_pred <- Elton_pred[1:2060,]
+
+rm(Elton_raw) #Clean environment
+
+```
+
+
+Check differences between species names in the two databases
+```{r, results = FALSE}
+setdiff(Elton$Species, AVONET$BirdLife_Species)  #1491 species names are not coincident
+
+setdiff(Elton$Species, AVONET$BirdTree_Species)  #4 species names are not coincident
+
+setdiff(Elton$Species, AVONET$BirdTree_Species) %in% AVONET$BirdLife_Species  
+
+```
+
+
+Campylopterus curvipennis and C. excellens are now Pampa curvipennis and P.excellens
+```{r}
+
+Elton[which(Elton$Species=="Campylopterus curvipennis"), "Species"]<-"Pampa curvipennis"
+Elton[which(Elton$Species=="Campylopterus excellens"), "Species"]<-"Pampa excellens"
+
+```
+
+The other 2 sps are extinct so we delete them in Elton database
+```{r}
+
+Elton<- Elton %>% dplyr::filter(Species!= "Philydor novaesi") %>% filter(Species!="Melamprosops phaeosoma")
+
+```
+
+Check again the differences
+```{r}
+setdiff(Elton$Species, AVONET$BirdTree_Species) #no difference
+Elton<-Elton %>% dplyr::rename(BirdTree_Species=Species)
+```
+
+Merge both datasets
+```{r}
+Frug_db <- left_join(Elton, AVONET, by="BirdTree_Species")
+
+```
+
+Duplicated rows appears because there is some uncongruences between BirdTree and
+BirdLife species names
+```{r, results=FALSE}
+duplicated(Frug_db$BirdTree_Species)
+Frug_db<- Frug_db[-which(duplicated(Frug_db$BirdTree_Species)),]
+
+```
+
+
+Add a binomial variable depending if fruits are the major component of the diet (>50%) or not
+```{r}
+Frug_db<- Frug_db %>% mutate (Frugivore=ifelse(Frugivory>=50,"Yes", "No"))
+```
+
+
+check sps names in prediction database
+```{r, results=FALSE}
+setdiff(Elton_pred$Species, AVONET$BirdLife_Species)
+
+setdiff(Elton_pred$Species, AVONET$BirdTree_Species) #5 sps names are not coincident
+
+setdiff(Elton_pred$Species, AVONET$BirdTree_Species) %in% AVONET$BirdLife_Species 
+```
+
+ 
+
+Anthus longicaudatus = Anthus vaalensis
+Phyllastrephus leucolepis = Phyllastrephus icterinus
+Lophura hatinhensis = Lophura edwardsi
+Polioptila clementsi = Polioptila guianensis
+```{r}
+Elton_pred[which(Elton_pred$Species=="Phyllastrephus leucolepis"), "Species"]<-"Phyllastrephus icterinus"
+Elton_pred[which(Elton_pred$Species=="Anthus longicaudatus"), "Species"]<-"Anthus vaalensis"
+Elton_pred[which(Elton_pred$Species=="Polioptila clementsi"), "Species"]<-"Polioptila guianensis"
+Elton_pred[which(Elton_pred$Species=="Lophura hatinhensis"), "Species"]<-"Lophura edwardsi"
+
+```
+
+
+Hypositta perdita = invalid taxon
+```{r}
+Elton_pred<- Elton_pred %>% dplyr::filter(Species!= "Hypositta perdita") 
+
+```
+
+
+Check sps names again
+```{r}
+setdiff(Elton_pred$Species, AVONET$BirdTree_Species)
+
+```
+
+
+Prediction database with traits
+```{r}
+Elton_pred<-Elton_pred %>% dplyr::rename(BirdTree_Species=Species)
+
+Elton_pred<- left_join(Elton_pred, AVONET, by="BirdTree_Species")
+
+```
+
+
+Check duplicates
+```{r, results=FALSE}
+Elton_pred[which(duplicated(Elton_pred$BirdTree_Species)),]
+
+Elton_pred <- Elton_pred[-which(duplicated(Elton_pred$BirdTree_Species)),]
+
+```
+
+
+Clean environment
+```{r}
+rm(Elton) 
+```
+
+# Interactive map of fruit importance in bird's diet worldwide
+
+
+Load specific packages
+```{r}
+library(sp)
+library(mapview)
+
+```
+
+
+This script aims at plotting the centroids of distribution rage for each
+species worldwide. Size of each coordinate will depict the importance
+of fruits in bird's diet in order to test if there is an latitudinal
+pattern in the consumption of fruits by birds
+
+Check NA's within data and remove it from data (just for plotting)
+```{r}
+which(is.na(Frug_db$Centre_Lat))
+Frug_Spatial <- Frug_db[-which(is.na(Frug_db$Centre_Lat)),]
+
+which(is.na(Frug_Spatial$Centre_Long))
+Frug_Spatial <- Frug_Spatial[-which(is.na(Frug_Spatial$Centre_Long)),]
+
+coords <- cbind(Frug_Spatial$Centre_Long, Frug_Spatial$Centre_Lat)
+
+
+```
+
+Turn df into SpatialPoinstDataframe
+```{r}
+Frug_Spatial <- SpatialPointsDataFrame(coords=coords, data = Frug_Spatial,
+                                       proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+
+```
+
+
+
+Create interactive map
+```{r}
+map<-mapview(Frug_Spatial,cex="Frugivory", zcol="Family", legend=FALSE, alpha=2)
+map
+```
+
+
+Save map as interactive html
+```{r}
+mapshot(map, url="Figures/Frugivory_Map.html")
+rm(list=c("coords", "Frug_Spatial", "map"))#clean environment
+
+```
+
+
