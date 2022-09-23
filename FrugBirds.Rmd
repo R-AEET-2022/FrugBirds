@@ -317,14 +317,21 @@ There is overdispersion, so we try with negative binomial distribution:
 
 
 
-```{r}
+```{r, fig.width=8, fig.height=6}
 library(glmmTMB)
 m6<- glmmTMB(Frugivory~scale(Beak_Width, center = T) + scale(KippsD, center=T) + scale(abs(Centre_Lat),center=T) + (1|Genus), data=Frug_db, family="nbinom1")
 summary(m6)
+performance::check_model(m6)
+```
+Compare models performance
+```{r}
 perf<-performance::compare_performance(m5,m6)
 library(knitr)
 kable(perf)
-
 ```
+
+
+
+
 
 
