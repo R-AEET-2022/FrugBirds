@@ -2,7 +2,9 @@
 title: "FrugBirds"
 author: "Iago Ferreiro & Iciar Jiménez"
 date: "2022-09-23"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -177,7 +179,8 @@ setdiff(Elton_pred$Species, AVONET$BirdTree_Species) #5 sps names are not coinci
 setdiff(Elton_pred$Species, AVONET$BirdTree_Species) %in% AVONET$BirdLife_Species 
 ```
 
- 
+
+
 
 Anthus longicaudatus = Anthus vaalensis
 Phyllastrephus leucolepis = Phyllastrephus icterinus
