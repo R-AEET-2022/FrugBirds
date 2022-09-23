@@ -284,4 +284,14 @@ rm(list=c("coords", "Frug_Spatial", "map"))#clean environment
 
 ```
 
+# Construct a model with poisson distribution and check it
+```{r}
+library(lme4)
+m5<- glmer(Frugivory~scale(Beak_Width, center = T) + scale(KippsD, center=T) + scale(Centre_Lat,center=T) + (1|Genus), data=Frug_db, family="poisson")
+
+summary(m5)
+res_sim<-DHARMa::simulateResiduals(m5)
+DHARMa::plotSimulatedResiduals(res_sim)
+performance::check_model(m5)
+```
 
