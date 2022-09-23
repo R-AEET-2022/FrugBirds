@@ -285,6 +285,14 @@ rm(list=c("coords", "Frug_Spatial", "map"))#clean environment
 ```
 
 # Construct a model with poisson distribution and check it
+Data distribution
+```{r}
+Frug_plot <- ggplot(Frug_db, aes(x=Frugivory, fill="#CF2877") ) + 
+  geom_histogram() +theme_minimal() + theme(legend.position = "none")
+Frug_plot
+```
+
+
 
 We use Kipps Distance as a proxy fo the Lifestyle 
 ```{r}
@@ -293,9 +301,9 @@ ggplot(Frug_db, aes(x=Lifestyle, y=log(KippsD), fill=Lifestyle)) + geom_boxplot(
 
 ```
 
-```{r}
+```{r, fig.width=6, fig.height=12}
 library(lme4)
-m5<- glmer(Frugivory~scale(Beak_Width, center = T) + scale(KippsD, center=T) + scale(Centre_Lat,center=T) + (1|Genus), data=Frug_db, family="poisson")
+m5<- glmer(Frugivory~scale(Beak_Width, center = T) + scale(KippsD, center=T) + scale(abs(Centre_Lat),center=T) + (1|Genus), data=Frug_db, family="poisson")
 
 summary(m5)
 res_sim<-DHARMa::simulateResiduals(m5)
@@ -311,11 +319,12 @@ There is overdispersion, so we try with negative binomial distribution:
 
 ```{r}
 library(glmmTMB)
-m6<- glmmTMB(Frugivory~scale(Beak_Width, center = T) + scale(KippsD, center=T) + scale(Centre_Lat,center=T) + (1|Genus), data=Frug_db, family="nbinom1")
+m6<- glmmTMB(Frugivory~scale(Beak_Width, center = T) + scale(KippsD, center=T) + scale(abs(Centre_Lat),center=T) + (1|Genus), data=Frug_db, family="nbinom1")
 summary(m6)
 perf<-performance::compare_performance(m5,m6)
 library(knitr)
 kable(perf)
 
 ```
+
 
