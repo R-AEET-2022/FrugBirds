@@ -301,7 +301,7 @@ ggplot(Frug_db, aes(x=Lifestyle, y=log(KippsD), fill=Lifestyle)) + geom_boxplot(
 
 ```
 
-```{r, fig.width=6, fig.height=12}
+```{r, fig.width=8, fig.height=6}
 library(lme4)
 m5<- glmer(Frugivory~scale(Beak_Width, center = T) + scale(KippsD, center=T) + scale(abs(Centre_Lat),center=T) + (1|Genus), data=Frug_db, family="poisson")
 
