@@ -302,7 +302,12 @@ res_sim<-DHARMa::simulateResiduals(m5)
 DHARMa::plotSimulatedResiduals(res_sim)
 performance::check_model(m5)
 ```
+
+
+
 There is overdispersion, so we try with negative binomial distribution:
+
+
 
 ```{r}
 library(glmmTMB)
