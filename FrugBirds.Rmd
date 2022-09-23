@@ -3,8 +3,8 @@ title: "FrugBirds"
 author: "Iago Ferreiro & Iciar Jiménez"
 date: "2022-09-23"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
